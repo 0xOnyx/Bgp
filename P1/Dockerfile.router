@@ -2,7 +2,7 @@
 # Basée sur Ubuntu pour une meilleure compatibilité avec quagga
 # Contient: BGPD, OSPFD, IS-IS, et busybox
 
-FROM ubuntu:22.04
+FROM ubuntu:18.04
 
 # Éviter les prompts interactifs
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,16 +35,16 @@ RUN echo '#!/bin/sh\n\
 echo "Démarrage des services Quagga..."\n\
 \n\
 # Démarrer zebra\n\
-/usr/lib/quagga/zebra -d -A 127.0.0.1 -f /etc/quagga/zebra.conf\n\
+/usr/sbin/zebra -d -A 127.0.0.1 -f /etc/quagga/zebra.conf\n\
 \n\
 # Démarrer bgpd\n\
-/usr/lib/quagga/bgpd -d -A 127.0.0.1 -f /etc/quagga/bgpd.conf\n\
+/usr/sbin/bgpd -d -A 127.0.0.1 -f /etc/quagga/bgpd.conf\n\
 \n\
 # Démarrer ospfd\n\
-/usr/lib/quagga/ospfd -d -A 127.0.0.1 -f /etc/quagga/ospfd.conf\n\
+/usr/sbin/ospfd -d -A 127.0.0.1 -f /etc/quagga/ospfd.conf\n\
 \n\
 # Démarrer isisd\n\
-/usr/lib/quagga/isisd -d -A 127.0.0.1 -f /etc/quagga/isisd.conf\n\
+/usr/sbin/isisd -d -A 127.0.0.1 -f /etc/quagga/isisd.conf\n\
 \n\
 # Afficher les interfaces\n\
 echo "Interfaces disponibles:"\n\

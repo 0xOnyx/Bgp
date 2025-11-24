@@ -40,6 +40,11 @@ docker build -f Dockerfile.router -t votre_login-router:latest .
 ```
 
 
+docker tag local-image-name jeremyds/my-app:v1
+docker push jeremyds/my-app:latest
+
+
+
 ### Configuration dans GNS3
 
 1. Ouvrir GNS3 → `Edit > Preferences > Docker`
