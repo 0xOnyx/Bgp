@@ -1,7 +1,7 @@
-! Configuration Zebra (Quagga) - Service de routage de base
+! Configuration Zebra (FRRouting) - Service de routage de base
 ! Configuration minimale - aucune IP par défaut
 
 hostname zebra
 password zebra
 enable password zebra
-log file /var/log/quagga/zebra.log
+log file /var/log/frr/zebra.log

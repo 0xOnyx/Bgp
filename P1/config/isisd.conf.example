@@ -1,10 +1,10 @@
-! Configuration IS-IS Daemon (Quagga)
+! Configuration IS-IS Daemon (FRRouting)
 ! Configuration minimale - à compléter selon vos besoins
 
 hostname isisd
 password isisd
 enable password isisd
-log file /var/log/quagga/isisd.log
+log file /var/log/frr/isisd.log
 
 ! Exemple de configuration IS-IS (à décommenter et adapter):
 ! router isis

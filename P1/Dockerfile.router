@@ -1,58 +1,77 @@
 # Image Docker pour routeur avec services de routage
-# Basée sur Ubuntu pour une meilleure compatibilité avec quagga
+# Basée sur Ubuntu pour une meilleure compatibilité avec FRRouting
 # Contient: BGPD, OSPFD, IS-IS, et busybox
 
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Éviter les prompts interactifs
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Installation de Quagga et outils essentiels
+# Installation de FRRouting et outils essentiels
 RUN apt-get update && apt-get install -y \
-    quagga \
+    frr \
     busybox \
     iproute2 \
     iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
-# Configuration de quagga
+# Configuration de FRRouting
 # Création des répertoires de configuration
-RUN mkdir -p /etc/quagga /var/log/quagga && \
-    chown -R quagga:quagga /etc/quagga /var/log/quagga && \
-    chmod 755 /etc/quagga
+RUN mkdir -p /etc/frr /var/log/frr && \
+    chown -R frr:frr /etc/frr /var/log/frr && \
+    chmod 755 /etc/frr
 
-# Création des configurations Quagga minimales
-RUN printf "hostname zebra\npassword zebra\nenable password zebra\nlog file /var/log/quagga/zebra.log\n" > /etc/quagga/zebra.conf && \
-    printf "hostname bgpd\npassword bgpd\nenable password bgpd\nlog file /var/log/quagga/bgpd.log\n" > /etc/quagga/bgpd.conf && \
-    printf "hostname ospfd\npassword ospfd\nenable password ospfd\nlog file /var/log/quagga/ospfd.log\n" > /etc/quagga/ospfd.conf && \
-    printf "hostname isisd\npassword isisd\nenable password isisd\nlog file /var/log/quagga/isisd.log\n" > /etc/quagga/isisd.conf && \
-    chown quagga:quagga /etc/quagga/*.conf && \
-    chmod 640 /etc/quagga/*.conf
+# Création des configurations FRRouting minimales
+RUN printf "hostname zebra\npassword zebra\nenable password zebra\nlog file /var/log/frr/zebra.log\n" > /etc/frr/zebra.conf && \
+    printf "hostname bgpd\npassword bgpd\nenable password bgpd\nlog file /var/log/frr/bgpd.log\n" > /etc/frr/bgpd.conf && \
+    printf "hostname ospfd\npassword ospfd\nenable password ospfd\nlog file /var/log/frr/ospfd.log\n" > /etc/frr/ospfd.conf && \
+    printf "hostname isisd\npassword isisd\nenable password isisd\nlog file /var/log/frr/isisd.log\n" > /etc/frr/isisd.conf && \
+    chown frr:frr /etc/frr/*.conf && \
+    chmod 640 /etc/frr/*.conf
 
-# Création d'un script de démarrage pour Quagga
-RUN echo '#!/bin/sh\n\
-# Démarrage des services Quagga\n\
-echo "Démarrage des services Quagga..."\n\
+# Configuration daemons FRR pour activer les services
+# Selon les exigences du sujet :
+# - BGPD actif et configuré (bgpd=yes)
+# - OSPFD actif et configuré (ospfd=yes)
+# - Service IS-IS (isisd=yes)
+RUN echo "zebra=yes\nbgpd=yes\nospfd=yes\nisisd=yes\n" > /etc/frr/daemons && \
+    chown frr:frr /etc/frr/daemons && \
+    chmod 644 /etc/frr/daemons
+
+# Création d'un script de démarrage pour FRRouting
+RUN echo '#!/bin/bash\n\
+# Démarrage des services FRRouting en arrière-plan\n\
+echo "Démarrage des services FRRouting..."\n\
+\n\
+# Déterminer le chemin des binaires FRR\n\
+FRR_BIN_DIR="/usr/lib/frr"\n\
+if [ ! -d "$FRR_BIN_DIR" ]; then\n\
+    FRR_BIN_DIR="/usr/libexec/frr"\n\
+fi\n\
+if [ ! -d "$FRR_BIN_DIR" ]; then\n\
+    FRR_BIN_DIR="/usr/sbin"\n\
+fi\n\
 \n\
 # Démarrer zebra\n\
-/usr/sbin/zebra -d -A 127.0.0.1 -f /etc/quagga/zebra.conf\n\
+$FRR_BIN_DIR/zebra -d -A 127.0.0.1 -f /etc/frr/zebra.conf\n\
 \n\
 # Démarrer bgpd\n\
-/usr/sbin/bgpd -d -A 127.0.0.1 -f /etc/quagga/bgpd.conf\n\
+$FRR_BIN_DIR/bgpd -d -A 127.0.0.1 -f /etc/frr/bgpd.conf\n\
 \n\
 # Démarrer ospfd\n\
-/usr/sbin/ospfd -d -A 127.0.0.1 -f /etc/quagga/ospfd.conf\n\
+$FRR_BIN_DIR/ospfd -d -A 127.0.0.1 -f /etc/frr/ospfd.conf\n\
 \n\
 # Démarrer isisd\n\
-/usr/sbin/isisd -d -A 127.0.0.1 -f /etc/quagga/isisd.conf\n\
+$FRR_BIN_DIR/isisd -d -A 127.0.0.1 -f /etc/frr/isisd.conf\n\
 \n\
 # Afficher les interfaces\n\
 echo "Interfaces disponibles:"\n\
 ip link show\n\
+echo "Services FRRouting démarrés. Vous pouvez utiliser vtysh pour configurer."\n\
 \n\
-# Garder le conteneur actif\n\
-tail -f /dev/null\n\
-' > /start-quagga.sh && chmod +x /start-quagga.sh
+# Lancer un shell interactif pour GNS3\n\
+exec /bin/bash\n\
+' > /start-frr.sh && chmod +x /start-frr.sh
 
 # Exposition des ports pour les services de routage
 # 2601: zebra
@@ -61,6 +80,6 @@ tail -f /dev/null\n\
 # 2608: isisd
 EXPOSE 2601 2604 2606 2608
 
-# Point d'entrée - démarrage direct des services Quagga
-CMD ["/start-quagga.sh"]
+# Point d'entrée - démarrage des services FRRouting puis shell interactif
+CMD ["/start-frr.sh"]
 

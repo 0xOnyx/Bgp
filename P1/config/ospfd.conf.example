@@ -1,10 +1,10 @@
-! Configuration OSPF Daemon (Quagga)
+! Configuration OSPF Daemon (FRRouting)
 ! Configuration minimale - à compléter selon vos besoins
 
 hostname ospfd
 password ospfd
 enable password ospfd
-log file /var/log/quagga/ospfd.log
+log file /var/log/frr/ospfd.log
 
 ! Exemple de configuration OSPF (à décommenter et adapter):
 ! router ospf
